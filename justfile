@@ -1,4 +1,4 @@
-test: parser_test scanner_test env_test interpreter_subfunc_test
+test: parser_test scanner_test env_test interpreter_subfunc_test integration_test
 
 parser_test:
     cargo test parser_test -- --test-threads=1 --nocapture
@@ -11,3 +11,6 @@ env_test:
 
 interpreter_subfunc_test:
     cargo test interpreter_test_subfunction -- --test-threads=1 --nocapture
+
+integration_test:
+    cargo test --test integration_test -- --test-threads=1 
