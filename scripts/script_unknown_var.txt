@@ -1,0 +1,4 @@
+STAGE initial
+SPEAK "尝试输出未定义的变量值" + name
+MATCH EMPTY
+NEXT dsa

@@ -283,6 +283,7 @@ mod interpreter_tests_user_input {
                 }]),
             ),
         );
+        // user input name
         interpreter.interpret(&stages).unwrap();
     }
 
@@ -300,6 +301,47 @@ mod interpreter_tests_user_input {
             "world"
         );
     }
+
+    #[test]
+    fn test_match_blocks_with_match() {
+        let interpreter = Interpreter::new();
+        let match_ = vec![MatchBlock {
+            pattern: "\"world\"".to_string(),
+            next_stage: "EXIT".to_string(),
+        }];
+        // don't input "world"
+        let result = interpreter.interpret_match_blocks(&match_);
+        let ans = if let Err(Error::Runtime) = result {
+            true
+        } else {
+            false
+        };
+        assert_eq!(ans, true);
+    }
+
+    #[test]
+    fn test_regex_match_blocks_with_match() {
+        let interpreter = Interpreter::new();
+        let match_ = vec![MatchBlock {
+            pattern: "\"[a-z]+\"".to_string(),
+            next_stage: "EXIT".to_string(),
+        }];
+        // input combination of letters(no matter case)
+        let result = interpreter.interpret_match_blocks(&match_);
+        let ans = if let Ok(match_block) = result {
+            match_block.pattern == "\"[a-z]+\""
+        } else {
+            false
+        };
+        assert_eq!(ans, true);
+    }
+}
+
+#[cfg(test)]
+mod interpreter_test_subfunction {
+
+    use super::*;
+    use crate::parser::MatchBlock;
 
     #[test]
     fn test_match_blocks_with_more_than_one_empty_trans() {
@@ -333,40 +375,6 @@ mod interpreter_tests_user_input {
         let result = interpreter.interpret_match_blocks(&match_);
         let ans = if let Ok(match_block) = result {
             match_block.pattern == "EMPTY"
-        } else {
-            false
-        };
-        assert_eq!(ans, true);
-    }
-
-    #[test]
-    fn test_match_blocks_with_match() {
-        let interpreter = Interpreter::new();
-        let match_ = vec![MatchBlock {
-            pattern: "\"world\"".to_string(),
-            next_stage: "EXIT".to_string(),
-        }];
-        // don't input "world"
-        let result = interpreter.interpret_match_blocks(&match_);
-        let ans = if let Err(Error::Runtime) = result {
-            true
-        } else {
-            false
-        };
-        assert_eq!(ans, true);
-    }
-
-    #[test]
-    fn test_regex_match_blocks_with_match() {
-        let interpreter = Interpreter::new();
-        let match_ = vec![MatchBlock {
-            pattern: "\"[a-z]+\"".to_string(),
-            next_stage: "EXIT".to_string(),
-        }];
-        // input combination of letters(no matter case)
-        let result = interpreter.interpret_match_blocks(&match_);
-        let ans = if let Ok(match_block) = result {
-            match_block.pattern == "\"[a-z]+\""
         } else {
             false
         };

@@ -1,0 +1,7 @@
+STAGE initial
+SPEAK "das"
+
+STAGE some
+SPEAK "some"
+MATCH "here"
+NEXT EXIT

@@ -1,0 +1,4 @@
+STAGE initial
+SPEAK "程序开始运行"
+MATCH EMPTY
+NEXT EXIT

@@ -1,0 +1,4 @@
+STAGE initial
+SPEAK "da"
+DEFAULT some
+NEXT EXIT

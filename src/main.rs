@@ -21,6 +21,7 @@ impl DSL {
     ///
     /// # 返回值
     /// * 成功返回Ok，失败返回Error
+    ///
     fn run(&mut self, path: &str) -> Result<(), Error> {
         let source = std::fs::read_to_string(path)?;
         let mut scanner = Scanner::new(source);
