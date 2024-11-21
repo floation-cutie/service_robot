@@ -36,9 +36,13 @@ impl Interpreter {
     ///
     /// # 返回值
     /// * 成功返回Ok，失败返回Error
+    ///
     pub fn interpret(&mut self, stages: &HashMap<String, StageBlock>) -> Result<(), Error> {
         loop {
-            let stage = stages.get(&self.global_env.stage).ok_or(Error::Parse)?;
+            // 当stage get不到时，输出error错误信息
+            let stage = stages.get(&self.global_env.stage).ok_or_else(|| {
+                self.error(&self.global_env.stage, "Runtime Error", "Stage not found")
+            })?;
             // 输出stage.speak,当speak内容中包含变量，且变量未定义时，返回运行时错误
             let speak = self.format_output(&stage.speak)?;
             // println!("DEBUG: the stage is {}", &stage.stage);

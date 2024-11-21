@@ -1,7 +1,5 @@
 STAGE initial
 SPEAK "请问你有什么需要帮忙的"
-MATCH "我的订单状态如何"
-    NEXT ask
 MATCH "打个招呼"
     NEXT get-name
 DEFAULT 
@@ -19,10 +17,5 @@ MATCH EMPTY
 
 STAGE unknown
 SPEAK "听不懂命令"
-MATCH EMPTY
-    NEXT initial
-
-STAGE ask
-SPEAK "一切顺利"
 MATCH EMPTY
     NEXT initial
