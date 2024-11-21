@@ -10,6 +10,7 @@ use crossterm::{
 use regex::RegexBuilder;
 use std::collections::HashMap;
 use std::io::{self, Write};
+use std::process::exit;
 ///
 /// DSL解释器
 ///
@@ -178,7 +179,7 @@ impl Interpreter {
     ///
     /// 读取用户输入
     /// 支持UTF-8字符集，故支持中文输入
-    /// 支持退格键删除，支持Esc键清空输入
+    /// 支持退格键删除，支持Esc键退出,支持Enter键提交输入
     ///
     /// # 返回值
     /// * 返回用户输入的字符串
@@ -216,6 +217,14 @@ impl Interpreter {
                             .execute(terminal::Clear(ClearType::CurrentLine))
                             .unwrap(); // 清除当前行内容
                         break; // 按Enter键提交输入
+                    }
+                    Event::Key(event::KeyEvent {
+                        code: KeyCode::Esc, ..
+                    }) => {
+                        input.clear(); // 清空输入
+                        stdout.execute(cursor::Show).unwrap(); // 显示光标
+                        terminal::disable_raw_mode().unwrap(); // 恢复终端模式
+                        exit(0); // 按Esc键退出程序
                     }
                     Event::Key(event::KeyEvent {
                         code: KeyCode::Char(c),
