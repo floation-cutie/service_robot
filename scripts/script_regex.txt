@@ -1,0 +1,18 @@
+STAGE initial
+SPEAK "请问你有什么需要帮忙的"
+MATCH ".*订单.*"
+    NEXT ask
+MATCH "退出"
+    NEXT EXIT
+DEFAULT 
+    NEXT unknown
+
+STAGE unknown
+SPEAK "听不懂命令"
+MATCH EMPTY
+    NEXT initial
+
+STAGE ask
+SPEAK "一切顺利"
+MATCH EMPTY
+    NEXT initial

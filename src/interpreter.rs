@@ -1,10 +1,15 @@
 use crate::env::GlobalEnvironment;
 use crate::error::Error;
 use crate::parser::{InputBlock, MatchBlock, StageBlock, Transition};
+use crossterm::{
+    cursor,
+    event::{self, read, Event, KeyCode},
+    terminal::{self, ClearType},
+    ExecutableCommand,
+};
 use regex::RegexBuilder;
 use std::collections::HashMap;
 use std::io::{self, Write};
-
 ///
 /// DSL解释器
 ///
@@ -36,6 +41,7 @@ impl Interpreter {
             let stage = stages.get(&self.global_env.stage).ok_or(Error::Parse)?;
             // 输出stage.speak,当speak内容中包含变量，且变量未定义时，返回运行时错误
             let speak = self.format_output(&stage.speak)?;
+            // println!("DEBUG: the stage is {}", &stage.stage);
             println!("{}", speak);
             io::stdout().flush()?;
             // 判断迁移条件是输入块还是匹配块
@@ -68,8 +74,7 @@ impl Interpreter {
     /// * 成功返回Ok，IO过程失败返回Error
     ///
     fn interpret_input_block(&mut self, input: &InputBlock) -> Result<(), Error> {
-        let mut input_string = String::new();
-        std::io::stdin().read_line(&mut input_string)?;
+        let input_string = self.read_line();
         self.global_env
             .define(input.input_var.clone(), input_string.trim());
         Ok(())
@@ -104,13 +109,15 @@ impl Interpreter {
                 }
             }
         }
-        let mut input_string = String::new();
-        std::io::stdin().read_line(&mut input_string)?;
+        let input_string = self.read_line();
         let input_string = input_string.trim();
         for match_block in match_ {
-            // 去除双引号
-            let pattern = match_block.pattern.trim().trim_matches('"');
-            let re = RegexBuilder::new(pattern)
+            // 去除双引号，且在前面加上^,在后面加上$
+
+            let mut pattern = match_block.pattern.trim().trim_matches('"').to_string();
+            // we recommend to use r"pattern" to define a regex pattern
+            pattern = format!(r"^{}$", pattern);
+            let re = RegexBuilder::new(&pattern)
                 .case_insensitive(true)
                 .build()
                 .unwrap();
@@ -162,6 +169,67 @@ impl Interpreter {
         }
 
         Ok(result)
+    }
+
+    ///
+    /// 读取用户输入
+    /// 支持UTF-8字符集，故支持中文输入
+    /// 支持退格键删除，支持Esc键清空输入
+    ///
+    /// # 返回值
+    /// * 返回用户输入的字符串
+    ///
+    fn read_line(&self) -> String {
+        let mut stdout = io::stdout();
+        terminal::enable_raw_mode().unwrap(); // 启用原始模式
+        stdout.execute(cursor::Hide).unwrap(); // 隐藏光标
+
+        let mut input = String::new(); // 用于存储用户输入的字符串
+        loop {
+            if let Ok(event) = read() {
+                match event {
+                    Event::Key(event::KeyEvent {
+                        code: KeyCode::Backspace,
+                        ..
+                    }) => {
+                        if !input.is_empty() {
+                            input.pop(); // 从字符串中删除最后一个字符
+                            stdout.execute(cursor::MoveToColumn(0)).unwrap(); // 将光标移动到行首
+                            stdout
+                                .execute(terminal::Clear(ClearType::CurrentLine))
+                                .unwrap(); // 清除当前行内容
+                            print!("{}", input); // 重新输出当前的输入字符串
+                            stdout.flush().unwrap();
+                        }
+                    }
+                    Event::Key(event::KeyEvent {
+                        code: KeyCode::Enter,
+                        ..
+                    }) => {
+                        println!(); // 换行
+                        stdout.execute(cursor::MoveToColumn(0)).unwrap(); // 将光标移动到行首
+                        stdout
+                            .execute(terminal::Clear(ClearType::CurrentLine))
+                            .unwrap(); // 清除当前行内容
+                        break; // 按Enter键提交输入
+                    }
+                    Event::Key(event::KeyEvent {
+                        code: KeyCode::Char(c),
+                        ..
+                    }) => {
+                        input.push(c); // 将字符添加到字符串中
+                        print!("{}", c); // 输出字符到屏幕
+                        stdout.flush().unwrap();
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        stdout.execute(cursor::Show).unwrap(); // 显示光标
+        terminal::disable_raw_mode().unwrap(); // 恢复终端模式
+
+        input // 返回最终输入的字符串
     }
 
     fn error(&self, stage: &str, what_: &str, message: &str) -> Error {
